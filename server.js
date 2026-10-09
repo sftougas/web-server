@@ -1,35 +1,36 @@
-import express from "express"
-import pageRouter from './routes/pages.js'
-import apiRouter from './routes/api.js'
-import { join } from 'path';
-import { title } from "process";
-const app = express();
+import express from 'express';
+import morgan from 'morgan';
+import entriesRouter from './routes/entries.js';
 
-const PORT  = process.env.PORT || 3000;
+const app = express();
+const PORT = process.env.PORT || 3000;
 
 app.set('view engine', 'ejs');
 app.set('views', 'views');
 
-const entries = [
-  {title: 'First note', body: 'Notes from the first ses'},
-  {title: 'Sec note', body: 'Notes from the second'},
-  {title: 'Third Note', body: ' Notes from third'}
-]
-app.use('/entries/:id',(req,res)=>{
-  if(!entries){
+app.use(express.static('public'));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-    res.status(404).send('Page not found.');
-
-  }
-  res.render('entry',{title: "My notes", entries})
-})
-app.get("/about", (req, res) => {
-  res.render("about", { title: "About" });
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.url}`);
+  next();
 });
 
-app.use((req,res)=>{
-res.status(404).send('Page not found.');
-})
-app.listen(PORT, () =>{
-	console.log(`Listening on http://localhost:${PORT}`);
+app.use(morgan('dev'));
+
+app.use('/entries', entriesRouter);
+
+app.use((req, res) => {
+  res.status(404).send('Page not found.');
 });
+
+app.use((err, req, res, next) => {
+  console.error(err);
+  res.status(500).send('Something went wrong.');
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running at http://localhost:${PORT}`);
+});
+// work in progress
